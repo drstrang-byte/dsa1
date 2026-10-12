@@ -1,0 +1,1534 @@
+#slip1-Q1
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.preprocessing import StandardScaler
+data = {
+"Product": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+"Price": [20, 25, 80, 75, 18, 100, 30, 90, 22, 95],
+"Rating": [4.2, 4.5, 4.8, 4.7, 4.1, 4.9, 4.3, 4.8, 4.2, 4.9],
+"Sales": [500, 650, 1200, 1100, 450, 1500, 700, 1400, 550, 1450]
+}
+df = pd.DataFrame(data)
+X = df[["Price", "Rating", "Sales"]]
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+linked = linkage(X_scaled, method='ward')
+plt.figure(figsize=(10, 6))
+dendrogram(linked,
+labels=df["Product"].values,
+leaf_rotation=90)
+plt.title("Dendrogram of Products")
+plt.xlabel("Products")
+plt.ylabel("Euclidean Distance")
+
+#Q2
+import pandas as pd
+from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+dataset = pd.read_csv("loan.csv")
+print("Original Loan Dataset:")
+print(dataset)
+
+X = dataset.drop(columns=["Application_ID", "Loan_Status"])
+y = dataset["Loan_Status"].map({
+"Approved": 1,
+"Rejected": 0
+})
+print("\nInput Features (X):")
+print(X)
+print("\nTarget (y):")
+print(y)
+print("A) FEATURE SELECTION")
+
+selector = SelectKBest(score_func=chi2, k=2)
+X_selected = selector.fit_transform(X, y)
+
+selected_features = X.columns[selector.get_support()]
+print("\nSelected Features:")
+print(list(selected_features))
+print("\nSelected Feature Data:")
+print(X_selected)
+print("B) FEATURE EXTRACTION USING PCA")
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+print("\nStandardized Data:")
+print(X_scaled)
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+pca_data = pd.DataFrame(
+X_pca,
+columns=["Principal_Component_1",
+"Principal_Component_2"]
+)
+pca_data["Loan_Status"] = dataset["Loan_Status"]
+print("\nPCA Reduced Dataset:")
+print(pca_data)
+
+#slip2-Q1
+#1)Write a Python program to create an age_records DataFrame containing the attributes Person_ID and Age for suitable sample records. Perform Data Discretization on the Age attribute using Equal Width Binning. Display the original and discretized data.
+import pandas as pd
+
+age_records = pd.DataFrame({
+"Person_ID": [101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
+"Age": [18, 22, 27, 31, 36, 42, 48, 55, 63, 72]
+})
+age_records["Age_Bin"] = pd.cut(
+age_records["Age"],
+bins=4,
+labels=["Young", "Adult", "Middle-Aged", "Senior"]
+)
+print("Original and Discretized Data:")
+print(age_records)
+
+#Q2
+import pandas as pd
+from mlxtend.preprocessing import TransactionEncoder
+from mlxtend.frequent_patterns import apriori, association_rules
+transactions = [
+    ["Video Lecture", "Quiz"],
+    ["Video Lecture", "Assignment"],
+    ["Quiz", "Discussion Forum"],
+    ["Video Lecture", "Quiz", "Assignment"],
+    ["Assignment", "Discussion Forum"],
+    ["Video Lecture", "Certificate"],
+    ["Quiz", "Certificate"],
+    ["Video Lecture", "Quiz"],
+["Assignment", "Certificate"],
+["Video Lecture", "Quiz", "Certificate"]
+]
+te = TransactionEncoder()
+te_array = te.fit(transactions).transform(transactions)
+df = pd.DataFrame(
+te_array,
+columns=te.columns_
+)
+print("\nOne-Hot Encoded Dataset:")
+print(df)
+support_values = [0.2, 0.3]
+for min_support in support_values:
+print("\n==========================================")
+print("Minimum Support =", min_support)
+print("==========================================")
+# Generate frequent itemsets
+frequent_itemsets = apriori(
+df,
+min_support=min_support,
+use_colnames=True
+)
+print("\nFrequent Itemsets:")
+print(frequent_itemsets)
+rules = association_rules(
+frequent_itemsets,
+metric="confidence",
+min_threshold=0.5
+)
+print("\nAssociation Rules:")
+if rules.empty:
+    print("No association rules found.")
+else:
+print(
+rules[
+[
+"antecedents",
+"consequents",
+"support",
+"confidence",
+"lift"
+]
+]
+)
+
+#Slip4-Q1
+#1)A survey was conducted to determine the preferred payment method among customers as shownbelow:
+#payment_methods = ["UPI", "Credit Card", "Debit Card", "Cash", "Net Banking"]
+
+
+import matplotlib.pyplot as plt
+payment_methods = ["UPI", "Credit Card", "Debit Card", "Cash", "Net Banking"]
+customers = [150, 80, 60, 40, 30]
+plt.figure(figsize=(8, 6))
+plt.pie(
+customers,
+labels=payment_methods,
+autopct="%1.1f%%",
+startangle=90
+)
+plt.title("Preferred Payment Methods Among Customers")
+plt.show()
+
+#Q2
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+# Read the E-commerce Customer dataset
+df = pd.read_csv("Ecommerce Customers.csv")
+print("E-commerce Customer Dataset:")
+print(df)
+df = df.dropna()
+X = df[
+[
+"Avg. Session Length",
+"Time on App",
+"Time on Website",
+"Length of Membership",
+"Yearly Amount Spent"
+]
+]
+print("\nSelected Numerical Features:")
+print(X)
+kmeans = KMeans(
+n_clusters=3,
+random_state=42,
+n_init=10
+)
+# Fit the model and predict clusters
+clusters = kmeans.fit_predict(X)
+centroids = kmeans.cluster_centers_
+print("\nCluster Labels:")
+print(clusters)
+print("\nCluster Centroids:")
+print(centroids)
+df["Cluster"] = clusters
+print("\nDataset with Cluster Labels:")
+print(df)
+# Plot clusters using two features
+plt.figure(figsize=(8, 6))
+plt.scatter(
+X.iloc[clusters == 0, 0],
+X.iloc[clusters == 0, 1],
+c="red",
+label="Cluster 1"
+)
+plt.scatter(
+X.iloc[clusters == 1, 0],
+X.iloc[clusters == 1, 1],
+c="blue",
+label="Cluster 2"
+)
+plt.scatter(
+X.iloc[clusters == 2, 0],
+X.iloc[clusters == 2, 1],
+c="green",
+label="Cluster 3"
+)
+# Plot centroids
+plt.scatter(
+centroids[:, 0],
+centroids[:, 1],
+c="black",
+marker="X",
+s=200,
+label="Centroids"
+)
+plt.xlabel("Avg. Session Length")
+plt.ylabel("Time on App")
+plt.title("K-Means Clustering of E-commerce Customers (K=3)")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+#Slip5-Q1
+import pandas as pd
+from sklearn.preprocessing import LabelEncoder
+# Create the customer DataFrame
+customer_DataFrame = pd.DataFrame({
+"Customer_ID": [101, 102, 103, 104, 105],
+"Gender": ["Male", "Female", "Male", "Female", "Male"],
+"City": ["Ahmedabad", "Surat", "Vadodara", "Rajkot", "Ahmedabad"],
+"Membership_Type": ["Gold", "Silver", "Platinum", "Gold", "Silver"]
+})
+# Display DataFrame before encoding
+print("DataFrame Before Label Encoding:")
+print(customer_DataFrame)
+# Create LabelEncoder
+label_encoder = LabelEncoder()
+# Apply label encoding to categorical attributes
+for column in ["Gender", "City", "Membership_Type"]:
+customer_DataFrame[column] = label_encoder.fit_transform(
+customer_DataFrame[column]
+)
+# Display DataFrame after encoding
+print("\nDataFrame After Label Encoding:")
+print(customer_DataFrame)
+
+#Q2
+import matplotlib.pyplot as plt
+from matplotlib_venn import venn2
+# Customer data
+only_netflix = 40
+only_amazon = 25
+both = 20
+# Create Venn Diagram
+plt.figure(figsize=(6,6))
+venn2(subsets=(only_netflix, only_amazon, both),
+set_labels=("Netflix", "Amazon Prime"))
+plt.title("Customer Usage of Netflix and Amazon Prime")
+# Display diagram
+plt.show()
+labels = ["Only Netflix", "Only Amazon Prime", "Both"]
+values = [only_netflix, only_amazon, both]
+plt.pie(values, labels=labels, autopct="%1.1f%%",
+colors=["red", "orange", "purple"])
+plt.title("Customer Distribution")
+plt.show()
+
+#Slip7-Q1
+import matplotlib.pyplot as plt
+# Course names
+courses = ["BCA", "BBA", "B.Com", "B.Sc", "BA"]
+# Number of students
+students = [60, 45, 75, 50, 35]
+# Create bar chart
+plt.figure(figsize=(8, 6))
+plt.bar(
+courses,
+students,
+color=["black", "blue", "green", "orange", "yellow"]
+)
+# Add title and labels
+plt.title("Number of Students Enrolled in Different Courses")
+plt.xlabel("Courses")
+plt.ylabel("Number of Students")
+# Display grid
+plt.grid(axis="y", linestyle="--", alpha=0.5)
+plt.show()
+
+#Q2
+import pandas as pd
+from mlxtend.preprocessing import TransactionEncoder
+from mlxtend.frequent_patterns import apriori, association_rules
+transactions = [
+["Basmati Rice", "Toor Dal", "Turmeric Powder", "Cooking Oil"],
+["Atta", "Sugar", "Tea", "Milk"],
+["Rice", "Moong Dal", "Salt", "Cooking Oil"],
+["Wheat Flour", "Chickpeas", "Turmeric Powder", "Cumin Seeds"],
+["Poha", "Peanuts", "Onions", "Cooking Oil"],
+["Basmati Rice", "Paneer", "Garam Masala", "Tomatoes"],
+["Atta", "Potatoes", "Onions", "Cooking Oil"]
+]
+te= TransactionEncoder()
+te_array = te.fit(transactions).transform(transactions)
+df = pd.DataFrame(
+te_array,
+columns=te.columns_
+)
+print("\nOne-Hot Encoded Dataset:")
+print(df)
+# Check missing values after encoding
+print("\nMissing Values after Encoding:")
+print(df.isnull().sum())
+# Handle missing values
+df = df.fillna(False)
+# Minimum support values
+support_values = [0.3, 0.4]
+for min_support in support_values:
+print("\n==========================================")
+print("Minimum Support =", min_support)
+print("==========================================")
+# Generate frequent itemsets
+frequent_itemsets = apriori(
+df,
+min_support=min_support,
+use_colnames=True
+)
+print("\nFrequent Itemsets:")
+print(frequent_itemsets)
+# Generate association rules
+if len(frequent_itemsets) > 1:
+rules = association_rules(
+frequent_itemsets,
+metric="confidence",
+min_threshold=0.5
+)
+print("\nAssociation Rules:")
+if rules.empty:
+print("No association rules found.")
+else:
+print(
+rules[
+[
+"antecedents",
+"consequents",
+"support",
+"confidence",
+"lift"
+]
+]
+)
+else:
+print("\nNo association rules found.")
+
+#Slip9-Q1
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler
+# Create the product DataFrame
+data = {
+'Product_ID': [101, 102, 103, 104, 105],
+'Price': [100, 200, 150, 300, 250],
+'Quantity_Sold': [10, 20, 15, 30, 25],
+'Discount': [5, 10, 0, 15, 20],
+'Revenue': [950, 3600, 2250, 7650, 5000]
+}
+df = pd.DataFrame(data)
+print("Original DataFrame:")
+print(df)
+# Create the Min-Max Scaler
+scaler = MinMaxScaler()
+# Apply Min-Max Scaling
+scaled_data = scaler.fit_transform(df)
+# Convert the transformed data back to a DataFrame
+scaled_df = pd.DataFrame(scaled_data, columns=df.columns)
+print("\nDataFrame after Min-Max Scaling:")
+print(scaled_df)
+
+#Q2
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib_venn import venn2
+from wordcloud import WordCloud
+# Create Book Dataset
+data = {
+"Book Title": [
+"The Great Gatsby",
+"To Kill a Mockingbird",
+"1984",
+"The Hobbit",
+"Pride and Prejudice",
+"Harry Potter",
+"The Alchemist",
+"The Book Thief",
+"The Kite Runner",
+"The Silent Patient"
+],
+"Author": [
+"F. Scott Fitzgerald",
+"Harper Lee",
+"George Orwell",
+"J.R.R. Tolkien",
+"Jane Austen",
+"J.K. Rowling",
+"Paulo Coelho",
+"Markus Zusak",
+"Khaled Hosseini",
+"Alex Michaelides"
+],
+"Publication Year": [
+1925,
+1960,
+1949,
+1937,
+1813,
+1997,
+1988,
+2005,
+2003,
+2019
+],
+"Average Rating": [
+4.2, 4.3, 4.2, 4.3, 4.3,
+4.5, 3.9, 4.4, 4.3, 4.1
+],
+"Number of Ratings": [
+500000, 600000, 700000, 800000, 900000,
+1000000, 500000, 400000, 600000, 300000
+]
+}
+df = pd.DataFrame(data)
+print("Book Dataset:")
+print(df)
+authors_before_2000 = set(
+df[df["Publication Year"] < 2000]["Author"]
+)
+# Authors of books published in or after 2000
+authors_after_2000 = set(
+df[df["Publication Year"] >= 2000]["Author"]
+)
+print("\nAuthors before 2000:")
+print(authors_before_2000)
+print("\nAuthors from 2000 onwards:")
+print(authors_after_2000)
+# Create Venn Diagram
+plt.figure(figsize=(8, 6))
+venn2(
+[authors_before_2000, authors_after_2000],
+set_labels=("Before 2000", "2000 and After")
+)
+plt.title("Comparison of Authors by Publication Period")
+plt.show()
+titles = " ".join(df["Book Title"].astype(str))
+# Create Word Cloud
+wordcloud = WordCloud(
+width=800,
+height=400,
+background_color="white"
+).generate(titles)
+# Display Word Cloud
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud, interpolation="bilinear")
+plt.axis("off")
+plt.title("Word Cloud of Book Titles")
+plt.show()
+
+#Slip10-Q1
+import matplotlib.pyplot as plt
+# Data
+transport = ["Bus", "Train", "Car", "Bike", "Bicycle"]
+employees = [120, 80, 60, 90, 30]
+# Colors for slices
+colors = ["gold", "lightblue", "lightgreen", "orange", "violet"]
+# Create Pie Chart
+plt.figure(figsize=(7,7))
+plt.pie(
+employees,
+labels=transport,
+autopct='%1.1f%%',
+colors=colors,
+startangle=90,
+shadow=True
+)
+# Title
+plt.title("Preferred Mode of Transportation Among Employees")
+# Display chart
+plt.axis('equal')
+
+#Q2
+import pandas as pd
+from mlxtend.preprocessing import TransactionEncoder
+from mlxtend.frequent_patterns import apriori, association_rules
+transactions = [
+["Video Lecture", "Quiz"],
+["Video Lecture", "Assignment"],
+["Quiz", "Discussion Forum"],
+["Video Lecture", "Quiz", "Assignment"],
+["Assignment", "Discussion Forum"],
+["Video Lecture", "Certificate"],
+["Quiz", "Certificate"],
+["Video Lecture", "Quiz"],
+["Assignment", "Certificate"],
+["Video Lecture", "Quiz", "Certificate"]
+]
+te = TransactionEncoder()
+te_array = te.fit(transactions).transform(transactions)
+df = pd.DataFrame(
+te_array,
+columns=te.columns_
+)
+print("\nOne-Hot Encoded Dataset:")
+print(df)
+support_values = [0.2, 0.3]
+for min_support in support_values:
+print("\n==========================================")
+print("Minimum Support =", min_support)
+print("==========================================")
+# Generate frequent itemsets
+frequent_itemsets = apriori(
+df,
+min_support=min_support,
+use_colnames=True
+)
+print("\nFrequent Itemsets:")
+print(frequent_itemsets)
+rules = association_rules(
+frequent_itemsets,
+metric="confidence",
+min_threshold=0.5
+)
+print("\nAssociation Rules:")
+if rules.empty:
+print("No association rules found.")
+else:
+print(
+rules[
+[
+"antecedents",
+"consequents",
+"support",
+"confidence",
+"lift"
+]
+]
+)
+
+#Slip11-Q1
+import matplotlib.pyplot as plt
+# Department names
+departments = ["HR", "Finance", "IT", "Sales", "Marketing"]
+# Number of employees
+employees = [20, 30, 50, 40, 25]
+# Create bar chart
+plt.figure(figsize=(8, 6))
+plt.bar(
+departments,
+employees,
+color=["red", "blue", "green", "orange", "purple"]
+)
+# Add title and labels
+plt.title("Distribution of Employees Among Departments")
+plt.xlabel("Departments")
+plt.ylabel("Number of Employees")
+# Display grid
+plt.grid(axis="y", linestyle="--", alpha=0.5)
+# Display chart
+plt.show()
+
+#Q2
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.cluster import KMeans
+# Read the E-commerce Customer dataset
+df = pd.read_csv("Ecommerce Customers.csv")
+print("E-commerce Customer Dataset:")
+print(df)
+df = df.dropna()
+X = df[
+[
+"Avg. Session Length",
+"Time on App",
+"Time on Website",
+"Length of Membership",
+"Yearly Amount Spent"
+]
+]
+print("\nSelected Numerical Features:")
+print(X)
+kmeans = KMeans(
+n_clusters=3,
+random_state=42,
+n_init=10
+)
+# Fit the model and predict clusters
+clusters = kmeans.fit_predict(X)
+centroids = kmeans.cluster_centers_
+print("\nCluster Labels:")
+print(clusters)
+print("\nCluster Centroids:")
+print(centroids)
+df["Cluster"] = clusters
+print("\nDataset with Cluster Labels:")
+print(df)
+# Plot clusters using two features
+plt.figure(figsize=(8, 6))
+plt.scatter(
+X.iloc[clusters == 0, 0],
+X.iloc[clusters == 0, 1],
+c="red",
+label="Cluster 1"
+)
+plt.scatter(
+X.iloc[clusters == 1, 0],
+X.iloc[clusters == 1, 1],
+c="blue",
+label="Cluster 2"
+)
+plt.scatter(
+X.iloc[clusters == 2, 0],
+X.iloc[clusters == 2, 1],
+c="green",
+label="Cluster 3"
+)
+# Plot centroids
+plt.scatter(
+centroids[:, 0],
+centroids[:, 1],
+c="black",
+marker="X",
+s=200,
+label="Centroids"
+)
+plt.xlabel("Avg. Session Length")
+plt.ylabel("Time on App")
+plt.title("K-Means Clustering of E-commerce Customers (K=3)")
+plt.legend()
+plt.grid(True)
+plt.show()
+
+#Slip13-Q1
+import pandas as pd
+import matplotlib.pyplot as plt
+df = pd.read_csv("sales.csv")
+print("Sales Data:")
+print(df)
+plt.figure(figsize=(10, 6))
+# Select the sales column
+plt.boxplot(
+df["Sales"].dropna(),
+patch_artist=True,
+boxprops=dict(facecolor="skyblue", color="blue"),
+medianprops=dict(color="red", linewidth=2),
+whiskerprops=dict(color="black"),
+capprops=dict(color="black"),
+flierprops=dict(
+marker="o",
+markerfacecolor="red",
+markeredgecolor="black",
+markersize=8
+)
+)
+plt.title("Daily Sales Distribution and Outliers", fontsize=16)
+plt.xlabel("Sales", fontsize=12)
+plt.ylabel("Sales Amount", fontsize=12)
+plt.grid(axis="y", linestyle="--", alpha=0.7)
+plt.show()
+
+#Q2
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, confusion_matrix, classification_report
+# Load Online Gaming Dataset
+df = pd.read_csv("gaming_data.csv")
+# Display dataset
+print(df.head())
+# Convert Player Type into numeric values
+# Casual = 0
+# Professional = 1
+df["player_type"] = df["player_type"].map({
+"Casual": 0,
+"Professional": 1
+})
+# Create Features
+daily_play_time = df["daily_play_time"].values
+achievements = df["achievements"].values
+purchases = df["purchases"].values
+gaming_level = df["gaming_level"].values
+X = np.column_stack((
+daily_play_time,
+achievements,
+purchases,
+gaming_level
+))
+# Target variable
+y = df["player_type"].values
+# Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(
+X,
+y,
+test_size=0.2,
+random_state=42
+)
+# Feature Scaling
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+# Model Training
+model = LogisticRegression()
+model.fit(X_train, y_train)
+# Prediction
+y_pred = model.predict(X_test)
+# Evaluation
+accuracy = accuracy_score(y_test, y_pred)
+cm = confusion_matrix(y_test, y_pred)
+report = classification_report(
+y_test,
+y_pred,
+target_names=["Casual", "Professional"]
+)
+print("\nLogistic Regression Results")
+print("Accuracy:", accuracy)
+print("\nConfusion Matrix:\n", cm)
+print("\nClassification Report:\n", report)
+new_data = np.array([[5, 55, 18, 50]])
+new_data_scaled = scaler.transform(new_data)
+prediction = model.predict(new_data_scaled)
+if prediction[0] == 0:
+result = "Casual Gamer"
+else:
+result = "Professional Gamer"
+print(
+"\nPrediction for Daily Play Time=5, "
+"Achievements=55, Purchases=18, Gaming Level=50:",
+result
+)
+# Comparison Graph
+models = ["Logistic Regression", "Random Guess"]
+accuracy_values = [accuracy, 0.5]
+plt.figure(figsize=(6, 4))
+plt.bar(
+models,
+accuracy_values,
+color=["green", "red"]
+)
+plt.title("Model Comparison (Accuracy)")
+plt.ylabel("Accuracy")
+plt.ylim(0, 1)
+plt.show()
+# Visualization
+plt.figure(figsize=(8, 5))
+plt.scatter(
+daily_play_time,
+gaming_level,
+c=y,
+cmap="coolwarm"
+)
+plt.title("Online Gaming Dataset (Casual / Professional)")
+plt.xlabel("Daily Play Time (Hours)")
+plt.ylabel("Gaming Level")
+plt.colorbar(
+label="0 = Casual, 1 = Professional"
+)
+plt.show()
+
+#Slip14-Q1
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.preprocessing import StandardScaler
+# Create the dataset
+data = {
+"Product": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+"Price": [20, 25, 80, 75, 18, 100, 30, 90, 22, 95],
+"Rating": [4.2, 4.5, 4.8, 4.7, 4.1, 4.9, 4.3, 4.8, 4.2, 4.9],
+"Sales": [500, 650, 1200, 1100, 450, 1500, 700, 1400, 550, 1450]
+}
+df = pd.DataFrame(data)
+# Select numerical features
+X = df[["Price", "Rating", "Sales"]]
+# Standardize the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+# Perform hierarchical clustering
+linked = linkage(X_scaled, method='ward')
+# Plot the dendrogram
+plt.figure(figsize=(10, 6))
+dendrogram(linked,
+labels=df["Product"].values,
+leaf_rotation=90)
+plt.title("Dendrogram of Products")
+plt.xlabel("Products")
+plt.ylabel("Euclidean Distance")
+plt.show()
+
+#Q2
+from sklearn.preprocessing import LabelEncoder
+data1 = {
+"Brand": ["Samsung", "Apple", "OnePlus", "Xiaomi", "Vivo"],
+"Model": ["Galaxy S24", "iPhone 15", "OnePlus 12", "Redmi Note 13", "Vivo V30"],
+"Price": [80000, 70000, 60000, 25000, 30000],
+"RAM": [8, 6, 12, 8, 8]
+}
+df1 = pd.DataFrame(data1)
+data2 = {
+"Model": ["Galaxy S24", "iPhone 15", "OnePlus 12", "Redmi Note 13", "Vivo V30"],
+"Storage": [256, 128, 256, 128, 256],
+"Battery_Capacity": [4000, 3349, 5400, 5000, 5000],
+"Operating_System": ["Android","iOS","Android","Android","Android"]
+}
+df2 = pd.DataFrame(data2)
+print("DataFrame 1:")
+print(df1)
+print("\nDataFrame 2:")
+print(df2)
+merged_df = pd.merge(
+df1,
+df2,
+on="Model",
+how="inner"
+)
+]
+print("\nMerged DataFrame:")
+print(merged_df)
+label_encoder = LabelEncoder()
+merged_df["Brand_Encoded"] = label_encoder.fit_transform(
+merged_df["Brand"]
+)
+print("\nAfter Label Encoding:")
+print(merged_df)
+merged_df = pd.get_dummies(
+merged_df,
+columns=["Operating_System"],
+dtype=int
+)
+]
+print("\nFinal Transformed DataFrame:")
+print(merged_df)
+
+#Slip15-Q1
+import pandas as pd
+# Create sample age records
+age_records = pd.DataFrame({
+"Person_ID": [101, 102, 103, 104, 105, 106, 107, 108, 109, 110],
+"Age": [18, 22, 27, 31, 36, 42, 48, 55, 63, 72]
+})
+# Equal Width Binning
+# Divide the age range into 4 equal-width bins
+age_records["Age_Bin"] = pd.cut(
+age_records["Age"],
+bins=4,
+labels=["Young", "Adult", "Middle-Aged", "Senior"]
+)
+# Display original and discretized data
+print("Original and Discretized Data:")
+print(age_records)
+
+#Q2
+import pandas as pd
+from mlxtend.preprocessing import TransactionEncoder
+from mlxtend.frequent_patterns import apriori, association_rules
+transactions = [
+["Basmati Rice", "Toor Dal", "Turmeric Powder", "Cooking Oil"],
+["Atta", "Sugar", "Tea", "Milk"],
+["Rice", "Moong Dal", "Salt", "Cooking Oil"],
+["Wheat Flour", "Chickpeas", "Turmeric Powder", "Cumin Seeds"],
+["Poha", "Peanuts", "Onions", "Cooking Oil"],
+["Basmati Rice", "Paneer", "Garam Masala", "Tomatoes"],
+["Atta", "Potatoes", "Onions", "Cooking Oil"]
+]
+te= TransactionEncoder()
+te_array = te.fit(transactions).transform(transactions)
+df = pd.DataFrame(
+te_array,
+columns=te.columns_
+)
+print("\nOne-Hot Encoded Dataset:")
+print(df)
+# Check missing values after encoding
+print("\nMissing Values after Encoding:")
+print(df.isnull().sum())
+# Handle missing values
+df = df.fillna(False)
+# Minimum support values
+support_values = [0.3, 0.4]
+for min_support in support_values:
+print("\n==========================================")
+print("Minimum Support =", min_support)
+print("==========================================")
+# Generate frequent itemsets
+frequent_itemsets = apriori(
+df,
+min_support=min_support,
+use_colnames=True
+)
+print("\nFrequent Itemsets:")
+print(frequent_itemsets)
+# Generate association rules
+if len(frequent_itemsets) > 1:
+rules = association_rules(
+frequent_itemsets,
+metric="confidence",
+min_threshold=0.5
+)
+print("\nAssociation Rules:")
+if rules.empty:
+print("No association rules found.")
+else:
+print(
+rules[
+["antecedents","consequents","support","confidence","lift"]
+]
+)
+else:
+print("\nNo association rules found.")
+
+#Slip16-Q1
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+# Create Student Performance Dataset
+data = {
+"Study Hours": [2, 3, 4, 5, 6, 7, 8, 9],
+"Attendance": [65, 70, 75, 80, 82, 88, 92, 95],
+"Assignment Score": [55, 60, 65, 72, 75, 82, 88, 92],
+"Exam Score": [50, 58, 63, 70, 74, 80, 87, 94]
+}
+# Create DataFrame
+df = pd.DataFrame(data)
+# Display dataset
+print("Student Performance Dataset:")
+print(df)
+correlation_matrix = df.corr()
+print("\nCorrelation Matrix:")
+print(correlation_matrix)
+# Create Heat Map
+plt.figure(figsize=(8, 6))
+sns.heatmap(
+correlation_matrix,
+annot=True,
+cmap="coolwarm",
+fmt=".2f",
+linewidths=0.5
+)
+# Add title
+plt.title("Correlation Heat Map of Student Performance")
+# Display plot
+plt.show()
+
+#Q2
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, Normalizer
+# Create Dataset
+data = {
+"Temperature": [20, 25, 30, 35, 40],
+"Humidity": [40, 50, 60, 70, 80],
+"Wind-Speed": [10, 15, 20, 25, 30],
+"Pressure": [1000, 1010, 1020, 1030, 1040],
+"Rainfall": [50, 100, 150, 200, 250]
+}
+# Create DataFrame
+df = pd.DataFrame(data)
+print("Original Dataset:")
+print(df)
+minmax_scaler = MinMaxScaler()
+minmax_data = minmax_scaler.fit_transform(df)
+minmax_df = pd.DataFrame(
+minmax_data,
+columns=df.columns
+)
+print("\nMin-Max Scaled Data:")
+print(minmax_df)
+standard_scaler = StandardScaler()
+standard_data = standard_scaler.fit_transform(df)
+standard_df = pd.DataFrame(
+standard_data,
+columns=df.columns
+)
+print("\nStandardized Data:")
+print(standard_df)
+normalizer = Normalizer()
+normalized_data = normalizer.fit_transform(df)
+normalized_df = pd.DataFrame(
+normalized_data,
+columns=df.columns
+)
+print("\nNormalized Data:")
+print(normalized_df)
+
+#Slip18-Q1
+import pandas as pd
+data = {
+'Employee_ID': [101, 102, 103, 104, 105, 105],
+'Age': [25, 30, None, 45, 120, None],
+'Department': ['HR', 'IT', 'Finance', None, 'IT', 'IT'],
+'Experience': [2, 5, None, 20, 3, 3],
+'Performance_Score': [85, 90, 88, None, 95, 95]
+}
+df = pd.DataFrame(data)
+print("Original Data:")
+print(df)
+# Handle missing values
+df['Age'] = df['Age'].fillna(df['Age'].mean())
+df['Experience'] = df['Experience'].fillna(df['Experience'].mean())
+df['Performance_Score'] = df['Performance_Score'].fillna(df['Performance_Score'].mean())
+# Fill categorical column with mode
+df['Department'] = df['Department'].fillna('unknown')
+print("\nData after handling missing values:")
+print(df)
+#remove duplicated
+df.drop_duplicates(inplace=True)
+print("\nData after removing duplicates:")
+print(df)
+Q1 = df['Age'].quantile(0.25)
+Q3 = df['Age'].quantile(0.75)
+IQR = Q3 - Q1
+lower_bound = Q1 - 1.5 * IQR
+upper_bound = Q3 + 1.5 * IQR
+outliers = df[
+(df['Age'] < lower_bound) |
+(df['Age'] > upper_bound)
+]
+print("\nOutliers in Age:")
+print(outliers)
+print("\nFinal Cleaned Data:")
+print(df)
+
+#Q2
+import pandas as pd
+import plotly.express as px
+import matplotlib.pyplot as plt
+import squarify
+df = pd.read_csv("worldcities.csv")
+print("World Cities Dataset:")
+print(df.head())
+print("\nMissing Values:")
+print(df.isnull().sum())
+df = df.dropna(
+subset=["city","country","latitude","longitude","population"]
+)
+fig = px.scatter_geo(
+df,
+lat="latitude",
+lon="longitude",
+size="population",
+color="country",
+hover_name="city",
+hover_data=["population"],
+title="World Cities - Population Visualization",
+projection="natural earth"
+)
+fig.show()
+# Select top 20 cities by population
+top_cities = df.nlargest(20, "population")
+plt.figure(figsize=(12, 7))
+squarify.plot(
+sizes=top_cities["population"],
+label=top_cities["city"],
+color=["red","blue","green", "orange","purple","cyan","yellow","pink","brown",
+"lime","coral","teal","gold","violet","navy","magenta","gray","olive","skyblue","salmon"],
+alpha=0.8
+)
+plt.title("Population Distribution of Top 20 World Cities")
+plt.axis("off")
+plt.show()
+
+#slip19-Q1
+import pandas as pd
+import matplotlib.pyplot as plt
+data = {
+"Fuel_Efficiency": [18, 22, 20, 25,80],
+"Engine_Power": [120, 150, 135, 180, 500],
+"Vehicle_Weight": [1200, 1400, 1300, 1500, 1600],
+"Engine_Size": [1.5, 1.8, 1.6, 2.0, 12.5],
+"Acceleration": [10.5, 9.2, 10.0, 8.5, 6.0]
+}
+df = pd.DataFrame(data)
+print("Vehicle DataFrame:")
+print(df)
+plt.figure(figsize=(10, 5))
+plt.subplot(1, 2, 1)
+plt.boxplot(df["Fuel_Efficiency"])
+plt.title("Box Plot - Fuel Efficiency")
+plt.ylabel("Fuel Efficiency")
+plt.subplot(1, 2, 2)
+plt.boxplot(df["Engine_Power"])
+plt.title("Box Plot - Engine Power")
+plt.ylabel("Engine Power")
+plt.tight_layout()
+plt.show()
+def find_outliers(column):
+Q1 = df[column].quantile(0.25)
+Q3 = df[column].quantile(0.75)
+IQR = Q3 - Q1
+lower_limit = Q1 - 1.5 * IQR
+upper_limit = Q3 + 1.5 * IQR
+outliers = df[
+(df[column] < lower_limit) |
+(df[column] > upper_limit)
+][column]
+return Q1, Q3, lower_limit, upper_limit, outliers
+q1, q3, lower, upper, outliers = find_outliers("Fuel_Efficiency")
+print("\nFuel Efficiency:")
+print("Q1 =", q1)
+print("Q3 =", q3)
+print("Lower Limit =", lower)
+print("Upper Limit =", upper)
+print("Outliers =", list(outliers))
+q1, q3, lower, upper, outliers = find_outliers("Engine_Power")
+print("\nEngine Power:")
+print("Q1 =", q1)
+print("Q3 =", q3)
+print("Lower Limit =", lower)
+print("Upper Limit =", upper)
+print("Outliers =", list(outliers))
+
+#Q2
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, Normalizer
+# Create Dataset
+data = {
+"Temperature": [20, 25, 30, 35, 40],
+"Humidity": [40, 50, 60, 70, 80],
+"Wind-Speed": [10, 15, 20, 25, 30],
+"Pressure": [1000, 1010, 1020, 1030, 1040],
+"Rainfall": [50, 100, 150, 200, 250]
+}
+# Create DataFrame
+df = pd.DataFrame(data)
+print("Original Dataset:")
+print(df)
+minmax_scaler = MinMaxScaler()
+minmax_data = minmax_scaler.fit_transform(df)
+minmax_df = pd.DataFrame(
+minmax_data,
+columns=df.columns
+)
+print("\nMin-Max Scaled Data:")
+print(minmax_df)
+standard_scaler = StandardScaler()
+standard_data = standard_scaler.fit_transform(df)
+standard_df = pd.DataFrame(
+standard_data,
+columns=df.columns
+)
+print("\nStandardized Data:")
+print(standard_df)
+normalizer = Normalizer()
+normalized_data = normalizer.fit_transform(df)
+normalized_df = pd.DataFrame(
+normalized_data,
+columns=df.columns
+)
+print("\nNormalized Data:")
+print(normalized_df)
+
+#Slip20-Q1
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+# Create Dataset
+data = {
+"Age": [22, 25, 28, 32, 35],
+"Salary": [25000, 30000, 40000, 50000, 60000],
+"Experience": [1, 3, 5, 8, 10],
+"Working_Hours": [35, 40, 42, 45, 50],
+"Performance_Score": [60, 65, 72, 80, 90]
+}
+# Create DataFrame
+df = pd.DataFrame(data)
+print("Original Dataset:")
+print(df)
+scaler = StandardScaler()
+standardized_data = scaler.fit_transform(df)
+standardized_df = pd.DataFrame(
+standardized_data,
+columns=df.columns
+)
+print("\nStandardized Data:")
+print(standardized_df)
+
+#Q2
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib_venn import venn2
+from wordcloud import WordCloud
+# Create Book Dataset
+data = {
+"Book Title": [
+"The Great Gatsby",
+"To Kill a Mockingbird",
+"1984",
+"The Hobbit",
+"Pride and Prejudice",
+"Harry Potter",
+"The Alchemist",
+"The Book Thief",
+"The Kite Runner",
+"The Silent Patient"
+],
+"Author": [
+"F. Scott Fitzgerald",
+"Harper Lee",
+"George Orwell",
+"J.R.R. Tolkien",
+"Jane Austen",
+"J.K. Rowling",
+"Paulo Coelho",
+"Markus Zusak",
+"Khaled Hosseini",
+"Alex Michaelides"
+],
+"Publication Year": [
+1925,
+1960,
+1949,
+1937,
+1813,
+1997,
+1988,
+2005,
+2003,
+2019
+],
+"Average Rating": [
+4.2, 4.3, 4.2, 4.3, 4.3,
+4.5, 3.9, 4.4, 4.3, 4.1
+],
+"Number of Ratings": [
+500000, 600000, 700000, 800000, 900000,
+1000000, 500000, 400000, 600000, 300000
+]
+}
+df = pd.DataFrame(data)
+print("Book Dataset:")
+print(df)
+authors_before_2000 = set(
+df[df["Publication Year"] < 2000]["Author"]
+)
+# Authors of books published in or after 2000
+authors_after_2000 = set(
+df[df["Publication Year"] >= 2000]["Author"]
+)
+print("\nAuthors before 2000:")
+print(authors_before_2000)
+print("\nAuthors from 2000 onwards:")
+print(authors_after_2000)
+# Create Venn Diagram
+plt.figure(figsize=(8, 6))
+venn2(
+[authors_before_2000, authors_after_2000],
+set_labels=("Before 2000", "2000 and After")
+)
+plt.title("Comparison of Authors by Publication Period")
+plt.show()
+titles = " ".join(df["Book Title"].astype(str))
+# Create Word Cloud
+wordcloud = WordCloud(
+width=800,
+height=400,
+background_color="white"
+).generate(titles)
+# Display Word Cloud
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud, interpolation="bilinear")
+plt.axis("off")
+plt.title("Word Cloud of Book Titles")
+plt.show()
+
+#Slip21-Q1
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+# Create the dataset
+data = {
+"Temperature": [20, 22, 26, 30, 34, 32, 29, 28, 29, 27, 24, 21],
+"Humidity": [60, 58, 55, 52, 60, 78, 88, 90, 85, 75, 68, 63],
+"Rainfall": [15, 20, 30, 45, 70, 180, 320, 290, 210, 90, 35, 18],
+"Wind Speed": [12, 14, 16, 18, 20, 22, 25, 23, 20, 17, 15, 13]
+}
+df = pd.DataFrame(data)
+# Compute correlation matrix
+corr = df.corr()
+# Plot heat map
+plt.figure(figsize=(6,5))
+sns.heatmap(corr,
+annot=True,
+cmap="coolwarm",
+fmt=".2f",
+linewidths=0.5)
+plt.title("Correlation Heat Map of Weather Parameters")
+plt.show()
+
+#Q2
+import pandas as pd
+from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+dataset = pd.read_csv("loan.csv")
+print("Original Loan Dataset:")
+print(dataset)
+
+X = dataset.drop(columns=["Application_ID", "Loan_Status"])
+y = dataset["Loan_Status"].map({
+"Approved": 1,
+"Rejected": 0
+})
+print("\nInput Features (X):")
+print(X)
+print("\nTarget (y):")
+print(y)
+print("A) FEATURE SELECTION")
+
+selector = SelectKBest(score_func=chi2, k=2)
+X_selected = selector.fit_transform(X, y)
+
+selected_features = X.columns[selector.get_support()]
+print("\nSelected Features:")
+print(list(selected_features))
+print("\nSelected Feature Data:")
+print(X_selected)
+print("B) FEATURE EXTRACTION USING PCA")
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+print("\nStandardized Data:")
+print(X_scaled)
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+pca_data = pd.DataFrame(
+X_pca,
+columns=["Principal_Component_1",
+"Principal_Component_2"]
+)
+pca_data["Loan_Status"] = dataset["Loan_Status"]
+print("\nPCA Reduced Dataset:")
+print(pca_data)
+
+#Slip22-Q1
+import pandas as pd
+from sklearn.preprocessing import Normalizer
+data = {
+"City": ["Mumbai","Pune","Delhi","Ahmedabad","Bengaluru"],
+"House_Type": ["1BHK","2BHK","3BHK","2BHK","1BHK"],
+"House_Area": [550,900,1400,1000,600],
+"Number_of_Rooms": [ 2,3,4,3,2],
+"Monthly_Rent": [18000,25000,40000,22000,20000]
+}
+# Create DataFrame
+df = pd.DataFrame(data)
+print("Original Dataset:")
+print(df)
+numerical_columns = [
+"House_Area",
+"Number_of_Rooms",
+"Monthly_Rent"
+]
+X = df[numerical_columns]
+normalizer = Normalizer()
+normalized_data = normalizer.fit_transform(X)
+# Create DataFrame of normalized data
+normalized_df = pd.DataFrame(
+normalized_data,
+columns=numerical_columns
+)
+print("\nNormalized Data:")
+print(normalized_df)
+
+#Q2
+import matplotlib.pyplot as plt
+from matplotlib_venn import venn2
+# Customer data
+only_netflix = 40
+only_amazon = 25
+both = 20
+# Create Venn Diagram
+plt.figure(figsize=(6,6))
+venn2(subsets=(only_netflix, only_amazon, both),
+set_labels=("Netflix", "Amazon Prime"))
+plt.title("Customer Usage of Netflix and Amazon Prime")
+# Display diagram
+plt.show()
+labels = ["Only Netflix", "Only Amazon Prime", "Both"]
+values = [only_netflix, only_amazon, both]
+plt.pie(values, labels=labels, autopct="%1.1f%%",
+colors=["red", "orange", "purple"])
+plt.title("Customer Distribution")
+plt.show()
+
+#Slip23-Q1
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.cluster.hierarchy import dendrogram, linkage
+from sklearn.preprocessing import StandardScaler
+# Create the dataset
+data = {
+"Product": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"],
+"Price": [20, 25, 80, 75, 18, 100, 30, 90, 22, 95],
+"Rating": [4.2, 4.5, 4.8, 4.7, 4.1, 4.9, 4.3, 4.8, 4.2, 4.9],
+"Sales": [500, 650, 1200, 1100, 450, 1500, 700, 1400, 550, 1450]
+}
+df = pd.DataFrame(data)
+# Select numerical features
+X = df[["Price", "Rating", "Sales"]]
+# Standardize the data
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+# Perform hierarchical clustering
+linked = linkage(X_scaled, method='ward')
+# Plot the dendrogram
+plt.figure(figsize=(10, 6))
+dendrogram(linked,
+labels=df["Product"].values,
+leaf_rotation=90)
+plt.title("Dendrogram of Products")
+plt.xlabel("Products")
+plt.ylabel("Euclidean Distance")
+plt.show()
+
+#Q2
+import pandas as pd
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, Normalizer
+# Create Dataset
+data = {
+"Temperature": [20, 25, 30, 35, 40],
+"Humidity": [40, 50, 60, 70, 80],
+"Wind-Speed": [10, 15, 20, 25, 30],
+"Pressure": [1000, 1010, 1020, 1030, 1040],
+"Rainfall": [50, 100, 150, 200, 250]
+}
+# Create DataFrame
+df = pd.DataFrame(data)
+print("Original Dataset:")
+print(df)
+minmax_scaler = MinMaxScaler()
+minmax_data = minmax_scaler.fit_transform(df)
+minmax_df = pd.DataFrame(
+minmax_data,
+columns=df.columns
+)
+print("\nMin-Max Scaled Data:")
+print(minmax_df)
+standard_scaler = StandardScaler()
+standard_data = standard_scaler.fit_transform(df)
+standard_df = pd.DataFrame(
+standard_data,
+columns=df.columns
+)
+print("\nStandardized Data:")
+print(standard_df)
+normalizer = Normalizer()
+normalized_data = normalizer.fit_transform(df)
+normalized_df = pd.DataFrame(
+normalized_data,
+columns=df.columns
+)
+print("\nNormalized Data:")
+print(normalized_df)
+
+#Slip25-Q1
+import matplotlib.pyplot as plt
+# Course names
+courses = ["BCA", "BBA", "B.Com", "B.Sc", "BA"]
+# Number of students
+students = [60, 45, 75, 50, 35]
+# Create bar chart
+plt.figure(figsize=(8, 6))
+plt.bar(
+courses,
+students,
+color=["black", "blue", "green", "orange", "yellow"]
+)
+# Add title and labels
+plt.title("Number of Students Enrolled in Different Courses")
+plt.xlabel("Courses")
+plt.ylabel("Number of Students")
+# Display grid
+plt.grid(axis="y", linestyle="--", alpha=0.5)
+# Display chart
+plt.show()
+
+#Q2
+from sklearn.preprocessing import LabelEncoder
+data1 = {
+"Brand": ["Samsung", "Apple", "OnePlus", "Xiaomi", "Vivo"],
+"Model": ["Galaxy S24", "iPhone 15", "OnePlus 12", "Redmi Note 13", "Vivo V30"],
+"Price": [80000, 70000, 60000, 25000, 30000],
+"RAM": [8, 6, 12, 8, 8]
+}
+df1 = pd.DataFrame(data1)
+data2 = {
+"Model": ["Galaxy S24", "iPhone 15", "OnePlus 12", "Redmi Note 13", "Vivo V30"],
+"Storage": [256, 128, 256, 128, 256],
+"Battery_Capacity": [4000, 3349, 5400, 5000, 5000],
+"Operating_System": ["Android","iOS","Android","Android","Android"]
+}
+df2 = pd.DataFrame(data2)
+print("DataFrame 1:")
+print(df1)
+print("\nDataFrame 2:")
+print(df2)
+merged_df = pd.merge(
+df1,
+df2,
+on="Model",
+how="inner"
+)
+]
+print("\nMerged DataFrame:")
+print(merged_df)
+label_encoder = LabelEncoder()
+merged_df["Brand_Encoded"] = label_encoder.fit_transform(
+merged_df["Brand"]
+)
+print("\nAfter Label Encoding:")
+print(merged_df)
+merged_df = pd.get_dummies(
+merged_df,
+columns=["Operating_System"],
+dtype=int
+)
+]
+print("\nFinal Transformed DataFrame:")
+print(merged_df)
